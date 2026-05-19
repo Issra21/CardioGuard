@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CardioGuard — Code patient oublié</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:linear-gradient(135deg,#0a0e27,#151b2d,#0d1117);color:#f1f5f9;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative}
+body::before{content:'';position:absolute;top:-50%;right:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(255,71,87,.15) 0%,transparent 70%);border-radius:50%;animation:float 8s ease-in-out infinite;z-index:0}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(30px)}}
+.card{position:relative;z-index:1;background:rgba(22,27,34,.7);border:1px solid rgba(255,71,87,.2);border-radius:20px;padding:48px;width:100%;max-width:440px;text-align:center;backdrop-filter:blur(10px)}
+.logo{font-size:40px;margin-bottom:16px}
+h1{font-size:22px;font-weight:700;margin-bottom:8px}
+.sub{font-size:14px;color:#94a3b8;margin-bottom:32px;line-height:1.6}
+.info-box{background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.2);border-radius:12px;padding:16px;margin-bottom:24px;text-align:left;font-size:13px;color:#94a3b8;line-height:1.6}
+.info-box strong{color:#ff4757;display:block;margin-bottom:6px}
+.form-group{text-align:left;margin-bottom:18px}
+label{font-size:13px;color:#94a3b8;display:block;margin-bottom:6px;font-weight:500}
+input{width:100%;padding:12px 16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,71,87,.2);border-radius:10px;color:#f1f5f9;font-size:14px;outline:none;transition:all .2s}
+input:focus{border-color:#ff4757}
+.btn{width:100%;padding:13px;background:#ff4757;color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px;transition:all .3s}
+.btn:hover{background:#ff5a6b;transform:translateY(-2px)}
+.link{margin-top:20px;font-size:13px;color:#94a3b8}
+.link a{color:#ff4757;text-decoration:none}
+.alert{padding:10px 14px;border-radius:8px;margin-bottom:16px;font-size:13px}
+.alert.error{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);color:#fca5a5}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">🔑</div>
+  <h1>Code patient oublié ?</h1>
+  <p class="sub">Entrez l'email avec lequel vous êtes inscrit. Une demande sera envoyée à votre médecin.</p>
+
+  <div class="info-box">
+    <strong>ℹ️ Comment ça marche ?</strong>
+    Votre médecin a le code de votre patient. Nous lui enverrons une notification, et il vous contactera pour vous l'envoyer.
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}<div class="alert {{ cat }}">{{ msg }}</div>{% endfor %}
+  {% endwith %}
+
+  <form method="POST">
+    <div class="form-group">
+      <label>Votre adresse email</label>
+      <input type="email" name="email" placeholder="votre@email.com" required>
+    </div>
+    <button type="submit" class="btn">Envoyer demande au médecin →</button>
+  </form>
+
+  <div class="link"><a href="/register">← Retour à l'inscription</a></div>
+</div>
+</body>
+</html>

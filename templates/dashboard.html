@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Surveillance ECG — {{ patient.prenom }} {{ patient.nom }}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#0a0e27;color:#e6edf3;min-height:100vh}
+.alert-banner{display:none;background:linear-gradient(90deg,#ff4757,#ff5a6b);color:white;text-align:center;padding:16px;font-size:17px;font-weight:700;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.75}}
+header{background:#161b22;border-bottom:1px solid #30363d;padding:14px 24px;
+  display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.header-left h1{font-size:17px;color:#ff4757;font-weight:600}
+.header-left .sub{font-size:13px;color:#8b949e;margin-top:3px}
+.header-right{display:flex;gap:16px;align-items:center}
+.clock{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.date-str{font-size:11px;color:#8b949e;text-align:right}
+.btn-back,.btn-logout{padding:6px 14px;background:transparent;border:1px solid #30363d;border-radius:6px;color:#8b949e;font-size:13px;text-decoration:none;transition:all .2s;cursor:pointer}
+.btn-back:hover{border-color:#ff4757;color:#ff4757}
+.btn-logout:hover{border-color:#ff4757;color:#ff4757}
+.state-card{margin:16px 20px 0;border-radius:14px;padding:24px 28px;display:flex;align-items:center;gap:20px;border:2px solid;transition:all .5s}
+.state-card.waiting{background:rgba(139,148,158,.06);border-color:#8b949e}
+.state-card.normal{background:rgba(79,185,50,.08);border-color:#3fb950}
+.state-card.alert-state{background:rgba(255,71,87,.1);border-color:#ff4757;animation:pb 1.5s infinite}
+@keyframes pb{0%,100%{box-shadow:0 0 0 0 rgba(255,71,87,.4)}50%{box-shadow:0 0 0 12px rgba(255,71,87,0)}}
+.state-icon{font-size:48px;flex-shrink:0}
+.state-text{font-size:22px;font-weight:700}
+.ok{color:#3fb950}.ko{color:#ff4757}.wait{color:#8b949e}
+.state-desc{font-size:13px;color:#8b949e;margin-top:6px;line-height:1.5}
+.grid{padding:14px 20px 20px;display:grid;grid-template-columns:1fr 300px;gap:14px}
+.left{display:flex;flex-direction:column;gap:12px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:16px}
+.card-title{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:1.5px;font-weight:500;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';width:3px;height:12px;border-radius:2px;background:#ff4757}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:#0d1117;border-radius:8px;padding:12px;text-align:center;border:1px solid #30363d}
+.stat-val{font-size:20px;font-weight:700;color:#ff4757}
+.stat-lbl{font-size:11px;color:#8b949e;margin-top:4px}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3fb950;margin-right:5px;animation:pd 1.2s infinite}
+.live-dot.off{background:#8b949e;animation:none}
+@keyframes pd{0%,100%{opacity:1}50%{opacity:.3}}
+.sig-meta{font-size:10px;color:#8b949e;text-align:right;margin-top:4px}
+.no-signal{display:none;text-align:center;padding:20px;color:#8b949e;font-size:13px;border:1px dashed #30363d;border-radius:8px;margin-top:8px}
+.alist{max-height:320px;overflow-y:auto}
+.aitem{border-left:3px solid #ff4757;background:rgba(255,71,87,.07);padding:10px 12px;border-radius:0 6px 6px 0;margin-bottom:6px}
+.atime{font-size:11px;color:#8b949e}
+.amsg{font-size:13px;font-weight:600;color:#ff4757;margin-top:3px}
+.no-alert{color:#3fb950;padding:20px;text-align:center;font-size:13px}
+.badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px;margin-left:5px}
+.badge.zero{background:rgba(63,185,80,.15);color:#3fb950}
+.badge.has{background:rgba(255,71,87,.15);color:#ff4757}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:7px 0;border-bottom:1px solid #30363d}
+.row:last-child{border-bottom:none}
+.lbl{color:#8b949e}
+.val-ok{color:#3fb950;font-weight:500}
+.val-ko{color:#ff4757;font-weight:500}
+.val-wait{color:#8b949e}
+.role-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(255,71,87,.15);color:#ff4757;margin-left:6px}
+@media(max-width:820px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="alert-banner" id="banner">🚨 Attention — Activité inhabituelle détectée 🚨</div>
+
+<header>
+  <div class="header-left">
+    <h1>🫀 Surveillance Cardiaque</h1>
+    <div class="sub">{{ patient.prenom }} {{ patient.nom }} <span class="role-badge">{% if user.role == 'medecin' %}👨‍⚕️ Médecin{% elif user.role == 'famille' %}👨‍👩‍👧 Famille{% else %}👤 Patient{% endif %}</span></div>
+  </div>
+  <div class="header-right">
+    <div>
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="date-str" id="date-str">Chargement...</div>
+    </div>
+    {% if user.role == 'medecin' %}<a href="/medecin" class="btn-back">← Mes patients</a>{% endif %}
+    <a href="/logout" class="btn-logout">Déconnexion</a>
+  </div>
+</header>
+
+<div class="state-card waiting" id="state-card">
+  <div class="state-icon" id="state-icon">⏳</div>
+  <div>
+    <div class="state-text wait" id="state-text">En attente du signal...</div>
+    <div class="state-desc" id="state-desc">Veuillez brancher les électrodes et allumer le bracelet.</div>
+  </div>
+</div>
+
+<div class="grid">
+<div class="left">
+  <div class="card">
+    <div class="card-title"><span class="live-dot off" id="live-dot"></span>Signal cardiaque en direct</div>
+    <canvas id="ecg" height="100"></canvas>
+    <div class="no-signal" id="no-signal">📡 Signal interrompu — En attente...</div>
+    <div class="sig-meta" id="sig-meta">En attente...</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Informations de la session</div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-val" id="s-up" style="color:#8b949e">--</div>
+        <div class="stat-lbl">⏱ Durée surveillance</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="s-total" style="color:#8b949e">--</div>
+        <div class="stat-lbl">📊 Données enregistrées</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Connexion</div>
+    <div class="row"><span class="lbl">WebSocket</span><span id="c-ws" class="val-ok">● Active</span></div>
+    <div class="row"><span class="lbl">Serveur médical</span><span id="c-mqtt" class="val-wait">● --</span></div>
+    <div class="row"><span class="lbl">Signal ECG</span><span id="c-sig" class="val-wait">● En attente</span></div>
+    <div class="row"><span class="lbl">Patient</span><span style="color:#ff4757;font-weight:500">{{ patient.prenom }} {{ patient.nom }}</span></div>
+    <div class="row"><span class="lbl">Code</span><span style="font-family:monospace;color:#8b949e">{{ patient.code }}</span></div>
+  </div>
+</div>
+
+<div>
+  <div class="card" style="height:100%">
+    <div class="card-title">Alertes <span class="badge {% if alerts %}has{% else %}zero{% endif %}" id="badge">{{ alerts|length }}</span></div>
+    <div class="alist" id="alist">
+      {% if alerts %}
+        {% for a in alerts %}
+        <div class="aitem">
+          <div class="atime">📅 {{ a.timestamp[:10] }} ⏰ {{ a.timestamp[11:19] }}</div>
+          <div class="amsg">⚠️ Activité inhabituelle détectée</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="no-alert">✅ Aucune alerte</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const MAX=500, buf=[];
+let dynMin=99999, dynMax=-99999, signalActive=false, alertCount={{ alerts|length }};
+
+const chart=new Chart(document.getElementById('ecg').getContext('2d'),{
+  type:'line',
+  data:{labels:[],datasets:[{data:buf,borderColor:'#ff4757',borderWidth:1.5,pointRadius:0,tension:0.1,fill:false}]},
+  options:{animation:false,responsive:true,scales:{x:{display:false},y:{grid:{color:'#21262d'},ticks:{color:'#8b949e',font:{size:10},maxTicksLimit:5,callback:v=>Math.round(v*3.3/4.095)+'mV'}}},plugins:{legend:{display:false}}}
+});
+
+function addPoints(batch){
+  for(const v of batch){
+    buf.push(v);if(buf.length>MAX)buf.shift();
+    if(v>0){if(v<dynMin)dynMin=v;if(v>dynMax)dynMax=v;}
+  }
+  if(dynMax>dynMin){const mg=Math.max((dynMax-dynMin)*0.15,80);chart.options.scales.y.min=Math.floor(dynMin-mg);chart.options.scales.y.max=Math.ceil(dynMax+mg);}
+  chart.data.labels=buf.map((_,i)=>i);chart.update('none');
+  const last=buf[buf.length-1];document.getElementById('sig-meta').textContent=`Signal : ${Math.round(last*3.3/4.095)} mV`;
+}
+
+function setWaiting(){document.getElementById('state-card').className='state-card waiting';document.getElementById('state-icon').textContent='⏳';document.getElementById('state-text').className='state-text wait';document.getElementById('state-text').textContent='En attente du signal...';document.getElementById('c-sig').textContent='● En attente';document.getElementById('c-sig').className='val-wait';}
+
+function setNormal(){document.getElementById('state-card').className='state-card normal';document.getElementById('state-icon').textContent='💚';document.getElementById('state-text').className='state-text ok';document.getElementById('state-text').textContent='Tout va bien';document.getElementById('live-dot').className='live-dot';document.getElementById('c-sig').textContent='● Signal reçu';document.getElementById('c-sig').className='val-ok';signalActive=true;}
+
+function setAlertState(){document.getElementById('state-card').className='state-card alert-state';document.getElementById('state-icon').textContent='🔴';document.getElementById('state-text').className='state-text ko';document.getElementById('state-text').textContent='Activité inhabituelle détectée';}
+
+const socket=io({transports:['websocket','polling']});
+socket.on('ecg_batch',d=>{if(d.code!=="{{ patient.code }}")return;if(!signalActive)setNormal();addPoints(d.b);});
+socket.on('new_alert',a=>{if(a.code!=="{{ patient.code }}")return;setAlertState();alertCount++;document.getElementById('banner').style.display='block';});
+socket.on('status',d=>{document.getElementById('clock').textContent=d.time;document.getElementById('date-str').textContent=d.date;});
+setWaiting();
+</script>
+</body>
+</html>

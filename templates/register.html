@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CardioGuard — Inscription</title>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0e27;--text:#f1f5f9;--sub:#94a3b8;--border:rgba(255,71,87,.2);--red:#ff4757}
+body{font-family:'Inter',system-ui,sans-serif;background:linear-gradient(135deg,var(--bg) 0%,#151b2d 50%,#0d1117 100%);
+  color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative}
+body::before{content:'';position:absolute;top:-50%;right:-10%;width:500px;height:500px;
+  background:radial-gradient(circle,rgba(255,71,87,.15) 0%,transparent 70%);
+  border-radius:50%;animation:float 8s ease-in-out infinite;z-index:0}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(30px)}}
+.card{position:relative;z-index:1;background:rgba(22,27,34,.7);border:1px solid var(--border);
+  border-radius:20px;padding:48px;width:100%;max-width:520px;backdrop-filter:blur(10px)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.logo-icon{width:38px;height:38px;background:var(--red);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  box-shadow:0 8px 16px rgba(255,71,87,.2)}
+.logo-name{font-size:18px;font-weight:700}
+h1{font-size:22px;font-weight:700;margin-bottom:6px}
+.sub{font-size:14px;color:var(--sub);margin-bottom:28px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{margin-bottom:16px}
+label{font-size:13px;color:var(--sub);display:block;margin-bottom:6px;font-weight:500}
+input,select{width:100%;padding:12px 16px;background:rgba(48,54,61,.5);
+  border:1px solid var(--border);border-radius:10px;color:var(--text);
+  font-size:14px;outline:none;transition:all .2s}
+input:focus,select:focus{border-color:var(--red);background:rgba(48,54,61,.7)}
+select option{background:var(--bg)}
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:4px}
+.role-btn{background:rgba(255,71,87,.05);border:1.5px solid var(--border);
+  border-radius:12px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .2s}
+.role-btn:hover{border-color:var(--red)}
+.role-btn.selected{border-color:var(--red);background:rgba(255,71,87,.15)}
+.role-btn .icon{font-size:22px;display:block;margin-bottom:6px}
+.role-btn .label{font-size:12px;font-weight:500}
+.role-btn .desc{font-size:10px;color:var(--sub);margin-top:2px}
+input[name=role]{display:none}
+.code-section{display:none;background:rgba(255,71,87,.05);
+  border:1px dashed var(--border);border-radius:12px;
+  padding:16px;margin-bottom:16px}
+.code-section.show{display:block}
+.code-hint{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.5}
+.code-hint a{color:var(--red);text-decoration:none}
+.btn-primary{width:100%;padding:13px;background:var(--red);
+  color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;
+  cursor:pointer;margin-top:8px;transition:all .3s;box-shadow:0 4px 12px rgba(255,71,87,.3)}
+.btn-primary:hover{background:#ff5a6b;transform:translateY(-2px)}
+.link-row{text-align:center;font-size:13px;color:var(--sub);margin-top:20px}
+.link-row a{color:var(--red);text-decoration:none;font-weight:600}
+.alert{padding:10px 14px;border-radius:8px;margin-bottom:16px;font-size:13px}
+.alert.error{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);color:#fca5a5}
+.alert.success{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:#6ee7b7}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">❤️</div>
+    <div class="logo-name">CardioGuard</div>
+  </div>
+
+  <h1>Créer un compte</h1>
+  <p class="sub">Rejoignez le système de surveillance cardiaque intelligente</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert {{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST" id="form">
+    <div class="grid2">
+      <div class="form-group">
+        <label>Nom</label>
+        <input type="text" name="nom" placeholder="Saidi" required>
+      </div>
+      <div class="form-group">
+        <label>Prénom</label>
+        <input type="text" name="prenom" placeholder="Issra" required>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Adresse email</label>
+      <input type="email" name="email" placeholder="votre@email.com" required>
+    </div>
+
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <input type="password" name="password" placeholder="Minimum 6 caractères" minlength="6" required>
+    </div>
+
+    <div class="form-group">
+      <label>Vous êtes</label>
+      <input type="hidden" name="role" id="role-val" required>
+      <div class="role-grid">
+        <div class="role-btn" onclick="selectRole('patient',this)">
+          <span class="icon">👤</span>
+          <div class="label">Patient</div>
+          <div class="desc">Surveillance personnelle</div>
+        </div>
+        <div class="role-btn" onclick="selectRole('medecin',this)">
+          <span class="icon">👨‍⚕️</span>
+          <div class="label">Médecin</div>
+          <div class="desc">Gestion multi-patients</div>
+        </div>
+        <div class="role-btn" onclick="selectRole('famille',this)">
+          <span class="icon">👨‍👩‍👧</span>
+          <div class="label">Famille</div>
+          <div class="desc">Alertes & surveillance</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-section" id="code-section">
+      <label style="margin-bottom:8px;display:block">Code patient</label>
+      <input type="text" name="patient_code" id="patient-code-input"
+             placeholder="Ex: ISSRA2026" style="text-transform:uppercase;letter-spacing:2px">
+      <div class="code-hint">
+        Ce code vous est fourni par votre médecin.<br>
+        Vous l'avez oublié ? <a href="/forgot-code">Récupérer mon code →</a>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-primary">Créer mon compte →</button>
+  </form>
+
+  <div class="link-row">
+    Déjà un compte ? <a href="/login">Se connecter</a>
+  </div>
+</div>
+
+<script>
+function selectRole(role, el) {
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('role-val').value = role;
+  const cs = document.getElementById('code-section');
+  const ci = document.getElementById('patient-code-input');
+  if(role === 'patient' || role === 'famille'){
+    cs.classList.add('show'); ci.required = true;
+  } else {
+    cs.classList.remove('show'); ci.required = false;
+  }
+}
+</script>
+</body>
+</html>

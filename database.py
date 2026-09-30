@@ -358,3 +358,23 @@ if __name__ == "__main__":
     init_db()
     insert_default_data()
     print("\n✅ Base de données prête !")
+
+def get_patient_user_by_code(patient_code):
+    """Récupère le compte utilisateur (avec email) du patient via son code"""
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE patient_code=? AND role='patient'", (patient_code,))
+    row = c.fetchone()
+    conn.close()
+    return row
+
+def get_patient_user_by_code(patient_code):
+    """Récupère le compte utilisateur (avec email) du patient via son code"""
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE patient_code=? AND role='patient'", (patient_code,))
+    row = c.fetchone()
+    conn.close()
+    return row

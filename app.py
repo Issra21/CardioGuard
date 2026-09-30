@@ -17,10 +17,11 @@ from database import (init_db, get_user_by_email, get_user_by_id,
                       link_famille_to_patient,
                       check_password, save_alert, get_alerts,
                       insert_default_data, create_patient,
-                      update_password, archive_patient, restore_patient)
+                      update_password, archive_patient, restore_patient,
+                      get_patient_user_by_code)
 
 os.makedirs("/home/issra/CardioGuard", exist_ok=True)
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
     format="%(asctime)s | %(message)s",
     handlers=[logging.FileHandler("/home/issra/CardioGuard/app.log"),
               logging.StreamHandler()])
@@ -144,6 +145,7 @@ def on_message(c, u, msg):
             proba = d.get('proba', 0)
             
             patient = get_patient_by_code(code)
+            patient_user = get_patient_user_by_code(code)
             if patient:
                 medecin = get_patient_medecin(code)
                 famille = get_famille_for_patient(code)
@@ -156,7 +158,7 @@ def on_message(c, u, msg):
                 # Email au PATIENT
                 if patient:
                     body_patient = f"""<div style="font-family:sans-serif;max-width:500px;margin:auto"><h2 style="color:#4f9cf9">💓 CardioGuard — Notification</h2><p>Bonjour <strong>{patient['prenom']} {patient['nom']}</strong>,</p><p style="font-size:16px;margin:20px 0">Une <strong>activité inhabituelle</strong> a été détectée.</p><div style="background:#1e293b;border:2px solid #4f9cf9;border-radius:12px;padding:20px;text-align:center;margin:16px 0"><div style="font-size:14px;color:#94a3b8;margin-bottom:12px">📅 {alert_date} — ⏰ {alert_time}</div></div><p style="font-size:14px;color:#6ee7b7;line-height:1.8">✅ <strong>Les médecins ont été alertés automatiquement</strong> et s'occupent de la situation.<br><strong>Restez calme.</strong></p><a href="{APP_URL}/dashboard/{code}" style="display:inline-block;padding:12px 24px;background:linear-gradient(135deg,#4f9cf9,#7c3aed);color:white;border-radius:8px;text-decoration:none;margin:20px 0">Voir mon dashboard →</a></div>"""
-                    send_email(patient.get('email') or 'admin@cardioguard.com', "CardioGuard — Activité détectée", body_patient)
+                    send_email(patient_user['email'] if patient_user else 'admin@cardioguard.com', "CardioGuard — Activité détectée", body_patient)
                 
                 # Email au MÉDECIN
                 if medecin:

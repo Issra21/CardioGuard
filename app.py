@@ -19,17 +19,17 @@ from database import (init_db, get_user_by_email, get_user_by_id,
                       insert_default_data, create_patient,
                       update_password, archive_patient, restore_patient)
 
-os.makedirs("/home/azureuser/app", exist_ok=True)
+os.makedirs("/home/issra/CardioGuard", exist_ok=True)
 logging.basicConfig(level=logging.INFO,
     format="%(asctime)s | %(message)s",
-    handlers=[logging.FileHandler("/home/azureuser/app/app.log"),
+    handlers=[logging.FileHandler("/home/issra/CardioGuard/app.log"),
               logging.StreamHandler()])
 log = logging.getLogger()
 
 GMAIL_USER = "admin.cardioguard@gmail.com"
 GMAIL_PASS = " eecn knsd gzyn hrun" 
 GMAIL_FROM = "CardioGuard <admin.cardioguard@gmail.com>"
-APP_URL    = "http://74.161.34.200"
+APP_URL    = "https://cardioguard.duckdns.org"
 
 reset_tokens = {}
 email_verify_tokens = {}
@@ -81,7 +81,7 @@ def send_email(to, subject, body):
 
 def get_patients_for_medecin_with_archived(medecin_id):
     """Récupère les patients actifs ET archivés d'un médecin"""
-    conn = sqlite3.connect('/home/azureuser/app/ecg.db')
+    conn = sqlite3.connect('/home/issra/CardioGuard/ecg.db')
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT * FROM patients WHERE medecin_id=? ORDER BY archived, nom, prenom", (medecin_id,))
@@ -92,7 +92,7 @@ def get_patients_for_medecin_with_archived(medecin_id):
 MQTT_HOST = "localhost"
 MQTT_PORT = 1883
 MQTT_USER = "Issra"
-MQTT_PASS = "Issra2026"
+MQTT_PASS = "Cg2026SecureMqtt!"
 MQTT_OK   = False
 patient_data = {}
 
@@ -366,7 +366,7 @@ def add_patient():
                 return render_template('add_patient.html', user=current_user)
             
             try:
-                conn = sqlite3.connect('/home/azureuser/app/ecg.db')
+                conn = sqlite3.connect('/home/issra/CardioGuard/ecg.db')
                 conn.execute("UPDATE patients SET medecin_id=? WHERE code=?", 
                            (current_user.id, existing_code))
                 conn.commit()
@@ -403,7 +403,7 @@ def restore_pat(code):
     if current_user.role != 'medecin':
         return redirect(url_for('home'))
     
-    conn = sqlite3.connect('/home/azureuser/app/ecg.db')
+    conn = sqlite3.connect('/home/issra/CardioGuard/ecg.db')
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT * FROM patients WHERE code=?", (code,))

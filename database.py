@@ -5,7 +5,7 @@ VERSION COMPLÈTE : Multi-médecins + Archivage + Famille
 """
 import sqlite3, hashlib
 import time
-DB_PATH = "/home/azureuser/app/ecg.db"
+DB_PATH = "/home/issra/CardioGuard/ecg.db"
 
 def get_db_connection(timeout=30, retries=3):
     """Connexion BD avec retry automatique"""
